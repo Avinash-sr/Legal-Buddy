@@ -4,12 +4,11 @@ from rest_framework.response import Response
 from .models import *
 from rest_framework.decorators import api_view
 import nltk
-# nltk.download('punkt')
 from nltk.tokenize import word_tokenize
 import string
 from nltk.corpus import stopwords
 from .models import *
-# nltk.download('punkt')
+
 
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -17,15 +16,7 @@ import pandas as pd
 import numpy as np
 
 from .serializers import *
-#------------------------------------------------------------------------
- # Load the saved model
-# embed = tf.saved_model.load(module_path)
-# sentence_encoder_layer=hub.KerasLayer(
-# "https://tfhub.dev/google/universal-sentence-encoder/4",
-# input_shape=[],
-# dtype=tf.string,
-# name="USE"
-# )
+
 
 custom_objects = {'KerasLayer': hub.KerasLayer}
 model = tf.keras.models.load_model("E:\ML\model_2(72% ts).h5", custom_objects=custom_objects)
@@ -46,23 +37,6 @@ def getresult(request):
 
         #2 predict
 
-    #     module_path = "E:/ML/universal_sentence_encoder_1"
-    #     # Load the saved model
-    #     embed = tf.saved_model.load(module_path)
-    #     sentence_encoder_layer=hub.KerasLayer(
-    #         "https://tfhub.dev/google/universal-sentence-encoder/4",
-    #         input_shape=[],
-    #         dtype=tf.string,
-    #         name="USE"
-    #     )
-
-    #     custom_objects = {'KerasLayer': hub.KerasLayer}
-    #     model = tf.keras.models.load_model("model_2(72% ts).h5", custom_objects=custom_objects)
-
-    #     CLASSES=['POCSO-2012', 'IPC-509', 'IPC-504', 'IPC-354', 'IPC-354A', 'IPC-498A',
-    #    'IPC-302', 'IPC-376', 'DPA', 'DVA', 'IPC-34', 'IPC 307', 'IPC 313',
-    #    'IPC 109', 'IPC 324', 'IPC 326', 'IPC 323']
-    
         # predict function call
         result = predict(sentences, model, CLASSES)
 
@@ -76,8 +50,6 @@ def getresult(request):
         return Response(predict)
         
 def predict(case, model, classes):
-    # case = [case]
-    # case = PreprocessingLayer(case)
     print(case)
     pred = model.predict(case)[0]
     top5_indices = np.argsort(pred)[::-1][:5]

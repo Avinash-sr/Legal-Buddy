@@ -16,44 +16,17 @@ import pandas as pd
 import numpy as np
 
 from .serializers import *
-
-
+#------------------------------------------------------------------------
+# Load the saved model
 custom_objects = {'KerasLayer': hub.KerasLayer}
-model = tf.keras.models.load_model("E:\ML\model_2(72% ts).h5", custom_objects=custom_objects)
+model = tf.keras.models.load_model("model_2(72% ts).h5", custom_objects=custom_objects,compile=False)
 
-CLASSES=['POCSO-2012', 'IPC-509', 'IPC-504', 'IPC-354', 'IPC-354A', 'IPC-498A',
-       'IPC-302', 'IPC-376', 'DPA', 'DVA', 'IPC-34', 'IPC 307', 'IPC 313',
-       'IPC 109', 'IPC 324', 'IPC 326', 'IPC 323']
-#--------------------------------------------------------------------
-
-@api_view(['POST'])
-def getresult(request):
-    module_path = "E:/ML/universal_sentence_encoder_1"
-    if request.method == 'POST':
-        #1 preproceessing
-        sentences = request.data
-        sentences = [sentences]
-        sentences = PreprocessingLayer(sentences)
-
-        #2 predict
-
-        # predict function call
-        result = predict(sentences, model, CLASSES)
-
-        predict = []
-        # Assuming laws is your model and lawsSerializer is the serializer for it
-        for code in result:
-            m = laws.objects.get(code=code)
-            serialized_data = lawsSerailizer(m).data
-            predict.append(serialized_data)
-        
-        return Response(predict)
-        
+# user helper function------------------------------------------------------------------------
 def predict(case, model, classes):
     print(case)
     pred = model.predict(case)[0]
     top5_indices = np.argsort(pred)[::-1][:5]
-    top5_indices = top5_indices.astype(int)  # Ensure top5_indices is of type int
+    top5_indices = top5_indices.astype(int)  
     top5_classes = [classes[i] for i in top5_indices]
     top5_probabilities = pred[top5_indices]
     pred= []
@@ -63,7 +36,6 @@ def predict(case, model, classes):
     return pred
 
 
-# user helper function
 def lowercase(sentences):
     for i in range(len(sentences)):
         sentences[i] = sentences[i].lower()
@@ -97,4 +69,31 @@ def PreprocessingLayer(sentences):
 
     return sentences
 
- 
+ #-----APIS---------------------------------------------------
+@api_view(['POST'])
+def getresult(request):
+    # module_path = "E:/ML/universal_sentence_encoder_1"
+    if request.method == 'POST':
+        #1 preproceessing
+        sentences = request.data
+        sentences = [sentences]
+        sentences = PreprocessingLayer(sentences)
+        print("Preprocessed Sentence : ",sentences)
+
+        #2 predict
+        print(model.summary())
+        CLASSES=['POCSO-2012', 'IPC-509', 'IPC-504', 'IPC-354', 'IPC-354A', 'IPC-498A',
+       'IPC-302', 'IPC-376', 'DPA', 'DVA', 'IPC-34', 'IPC 307', 'IPC 313',
+       'IPC 109', 'IPC 324', 'IPC 326', 'IPC 323']
+        result = predict(sentences, model, CLASSES)
+
+        #3 interpreting results
+        predictions = []
+        for code in result:
+            m = laws.objects.get(code=code)
+            serialized_data = lawsSerailizer(m).data
+            predictions.append(serialized_data)
+        
+        return Response(predictions)
+        
+
